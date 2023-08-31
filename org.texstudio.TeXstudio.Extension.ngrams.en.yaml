@@ -3,6 +3,7 @@ build-extension: true
 runtime: org.texstudio.TeXstudio
 runtime-version: stable
 sdk: org.freedesktop.Sdk//22.08
+appstream-compose: false
 
 modules:
   - name: metainfo
@@ -12,7 +13,8 @@ modules:
     sources:
       - type: file
         path: org.texstudio.TeXstudio.Extension.ngrams.en.metainfo.xml
-  - name: download
+
+  - name: ngrams-data
     buildsystem: simple
     build-commands:
       - cp -ar ./* ${FLATPAK_DEST}
