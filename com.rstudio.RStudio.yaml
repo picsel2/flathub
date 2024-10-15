@@ -87,7 +87,7 @@ modules:
       - mv ./lib/* /app/lib/
     sources:
       - type: archive
-        url: https://downloads.apache.org/ant/binaries/apache-ant-1.10.12-bin.tar.bz2
+        url: https://archive.apache.org/dist/ant/binaries/apache-ant-1.10.12-bin.tar.bz2
         sha256: 276ea73f267a5b1a58f02e2eb5ef594a9b2885e33afb05ef995251d4d18377a6
         x-checker-data:
           type: anitya
