@@ -199,9 +199,10 @@ modules:
         sha256: 4f87bfe8a0a626ad0e17d26d42e99a1c0ed7d369cca00366c1b3d97525f57db5
 
   - name: RStudio
-    buildsystem: cmake
+    buildsystem: cmake-ninja
     builddir: true
     config-opts:
+      - -DCMAKE_BUILD_TYPE=RelWithDebInfo
       - -DRSTUDIO_USE_SYSTEM_YAML_CPP=Yes
       - -DRSTUDIO_USE_SYSTEM_BOOST=Yes
       - -DRSTUDIO_USE_SYSTEM_SOCI=Yes
