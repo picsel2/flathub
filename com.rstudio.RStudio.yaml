@@ -261,12 +261,7 @@ modules:
       - type: patch
         path: 0004-use-system-node.patch
       - type: patch
-        path: 0005-disable-quarto.patch
-      - type: patch
         path: install-desktop-icon-dest.patch
-      #- type: patch
-        #path: node.patch
       - type: file
         path: com.rstudio.RStudio.metainfo.xml
 
-  - addon-dependencies.yaml
