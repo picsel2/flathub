@@ -1,15 +1,11 @@
 app-id: com.rstudio.RStudio
-runtime: org.kde.Sdk
-runtime-version: '5.15-21.08'
-#runtime-version: '5.15-21.08'does not work, no clue
-sdk: org.kde.Sdk
-base: io.qt.qtwebengine.BaseApp
-base-version: '5.15-21.08'
+runtime: org.freedesktop.Sdk
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.openjdk11
-  - org.freedesktop.Sdk.Extension.llvm12
-  - org.freedesktop.Sdk.Extension.node16
-# openjdk17 does not work, no clue why
+  - org.freedesktop.Sdk.Extension.llvm18
+  - org.freedesktop.Sdk.Extension.node20
 command: rstudio
 rename-icon: rstudio
 rename-desktop-file: rstudio.desktop
@@ -24,33 +20,40 @@ finish-args:
   - --env=QTWEBENGINE_DISABLE_SANDBOX=1
   - --env=QT_QPA_PLATFORM=xcb
 build-options:
-  append_path: /usr/lib/sdk/node16/bin
-  cflags: -O2 -g
-  cxxflags: -O2 -g
+  append_path: /usr/lib/sdk/node20/bin
+  cflags: -O3 -DNDEBUG
+  cxxflags: -O3 -DNDEBUG
   env:
-    PATH: $PATH:/usr/bin:/app/bin:/usr/lib/sdk/openjdk11/bin
-    npm_config_nodedir: /usr/lib/sdk/node14
-    npm_config_offline: true
-    NPM_CONFIG_LOGLEVEL: info
-cleanup:
+    FCFLAGS: -O3 -DNDEBUG
+#    PATH: $PATH:/usr/bin:/app/bin:/usr/lib/sdk/openjdk11/bin
+#    npm_config_nodedir: /usr/lib/sdk/node14
+#    npm_config_offline: true
+#    NPM_CONFIG_LOGLEVEL: info
+cleanup: []
   #- /include
 
 modules:
   - name: Boost
+    # Docs for building boost binaries: https://www.boost.org/doc/libs/1_86_0/more/getting_started/unix-variants.html#prepare-to-use-a-boost-library-binary
     buildsystem: simple
     build-commands:
-      - ./bootstrap.sh --prefix=/app
-      - ./b2 install --build-type=complete link=shared --layout=versioned runtime-link=shared
-        cxxflags="$CXXFLAGS" linkflags="$LDFLAGS" -j $FLATPAK_BUILDER_N_JOBS
+      - ./bootstrap.sh
+      - ./b2 install --prefix=${FLATPAK_DEST} link=shared runtime-link=shared -j ${FLATPAK_BUILDER_N_JOBS}
+        --with-chrono
+        --with-context
+        --with-date_time
+        --with-filesystem
+        --with-iostreams
+        --with-program_options
+        --with-random
+        --with-regex
+        --with-system
+        --with-test
+        --with-thread
     sources:
       - type: archive
-        url: https://boostorg.jfrog.io/artifactory/main/release/1.78.0/source/boost_1_78_0.tar.bz2
-        sha256: 8681f175d4bdb26c52222665793eef08490d7758529330f98d3b29dd0735bccc
-        x-checker-data:
-          type: anitya
-          project-id: 6845
-          stable-only: true
-          url-template: https://boostorg.jfrog.io/artifactory/main/release/$version/source/boost_${major}_${minor}_${patch}.tar.bz2
+        url: https://archives.boost.io/release/1.83.0/source/boost_1_83_0.tar.bz2
+        sha256: 6478edfe2f3305127cffe8caf73ea0176c53769f4bf1585be237eb30798c3b8e
 
   - name: R
     buildsystem: autotools
@@ -61,20 +64,8 @@ modules:
       - '/lib/R/doc'
     sources:
       - type: archive
-        url: https://cloud.r-project.org/src/base/R-4/R-4.1.3.tar.gz
-        sha256: 15ff5b333c61094060b2a52e9c1d8ec55cc42dd029e39ca22abdaa909526fed6
-        x-checker-data:
-          type: anitya
-          project-id: 4150
-          stable-only: true
-          url-template: https://cloud.r-project.org/src/base/R-4/R-$version.tar.gz
-
-  #- name: test
-    #cleanup:
-      #- '*'
-    #buildsystem: simple
-    #build-commands:
-      #- fsdfkdshf
+        url: https://cran.r-project.org/src/base/R-4/R-4.4.1.tar.xz
+        sha256: fbd755314a5cc08c57aabff839ff791fb43a9052a2c6524ec3be96075fd34dde
 
   - name: ant
     cleanup:
@@ -177,10 +168,10 @@ modules:
   - name: node
     buildsystem: simple
     build-options:
-      prepend-path: /usr/lib/sdk/node16/bin
+      prepend-path: /usr/lib/sdk/node20/bin
     build-commands:
-      - ls -l /usr/lib/sdk/node16
-      - /usr/lib/sdk/node16/install.sh
+      - ls -l /usr/lib/sdk/node20
+      - /usr/lib/sdk/node20/install.sh
       - ls -l /usr/bin
       - whereis node
       #- jvjvhjjjhvjh
@@ -202,7 +193,7 @@ modules:
     buildsystem: cmake-ninja
     builddir: true
     config-opts:
-      - -DCMAKE_BUILD_TYPE=RelWithDebInfo
+      - -DCMAKE_BUILD_TYPE=Release
       - -DRSTUDIO_USE_SYSTEM_YAML_CPP=Yes
       - -DRSTUDIO_USE_SYSTEM_BOOST=Yes
       - -DRSTUDIO_USE_SYSTEM_SOCI=Yes
@@ -212,8 +203,10 @@ modules:
       - -DSOCI_CORE_LIB=/app/lib/libsoci_core.so
       - -DSOCI_SQLITE_LIB=/app/lib/libsoci_sqlite3.so
       - -DSOCI_POSTGRESQL_LIB=/app/lib/libsoci_postgresql.so
+      - -DRSTUDIO_TOOLS_ROOT=/run/build/RStudio/dependencies/common
       - -DRSTUDIO_INSTALL_FREEDESKTOP=Yes
       - -DRSTUDIO_BUNDLE_QT=FALSE
+      - -DQUARTO_ENABLED=FALSE
     build-options:
       cflags: -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -Werror=return-type -g -DNDEBUG
       cxxflags: -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -Werror=return-type -g -DNDEBUG
@@ -229,40 +222,29 @@ modules:
       - share/mime
     sources:
       - type: archive
-        url: https://github.com/rstudio/rstudio/archive/refs/tags/v2022.02.1+461.tar.gz
-        sha256: 41e48e21ddc0a9c1ebf06ff16d846b0389720f2ee66d3fcfd5ff0707578b597d
+        url: https://github.com/rstudio/rstudio/archive/refs/tags/v2024.09.0+375.tar.gz
+        sha256: 8a29b77c53a3db8379d824a9f4a491843036003d105ed71981cd40fe39d2c8c8
       - type: archive
         url: https://s3.amazonaws.com/rstudio-buildtools/dictionaries/core-dictionaries.zip
         sha256: 4341a9630efb9dcf7f215c324136407f3b3d6003e1c96f2e5e1f9f14d5787494
         dest: dependencies/common/dictionaries
       - type: archive
-        url: https://s3.amazonaws.com/rstudio-buildtools/mathjax-27.zip
-        sha256: c56cbaa6c4ce03c1fcbaeb2b5ea3c312d2fb7626a360254770cbcb88fb204176
-        dest: dependencies/common/mathjax-26
+        url: https://github.com/mathjax/MathJax/archive/refs/tags/2.7.9.tar.gz
+        sha256: c9167279c87da044f2ff910ad573a02ce90354cb59440ae568eb86e1630f65df
+        dest: dependencies/common/mathjax-27
       - type: archive
         only-arches:
           - x86_64
-        url: https://s3.amazonaws.com/rstudio-buildtools/pandoc/2.16.2/pandoc-2.16.2-linux-amd64.tar.gz
-        sha256: f053aa621130383c9166db3a3a09fa5de95090e165711011607f84b285609bd1
-        dest: dependencies/common/pandoc
+        url: https://github.com/jgm/pandoc/releases/download/2.18/pandoc-2.18-linux-amd64.tar.gz
+        sha256: 103df36dc21081b7205d763ef7705e340eb0ea7e18694239b328a549892cc007
+        dest: dependencies/common/pandoc/2.18
       - type: archive
         only-arches:
           - aarch64
-        url: https://github.com/jgm/pandoc/releases/download/2.16.2/pandoc-2.16.2-linux-arm64.tar.gz
+        url: https://github.com/jgm/pandoc/releases/download/2.18/pandoc-2.18-linux-arm64.tar.gz
         sha256: ec5eb2ebfc067f90cc4c86624f57505cfe2f8a2b882010f496a1abd1743a4672
-        dest: dependencies/common/pandoc
+        dest: dependencies/common/pandoc/2.18
       - type: patch
-        path: 0000-unbundle-dependencies-common.patch
-      #- type: patch
-        #path: 0001-unbundle-qtsingleapplication.patch
-      - type: patch
-        path: 0002-fix-rstudio-exec-path.patch
-      - type: patch
-        path: 0003-fix-resources-path.patch
-      - type: patch
-        path: 0004-use-system-node.patch
-      - type: patch
-        path: install-desktop-icon-dest.patch
+        path: 0000-disable-packaging.patch
       - type: file
         path: com.rstudio.RStudio.metainfo.xml
-

@@ -1,0 +1,12 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 106a759134..360cc0b6d8 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -60,7 +60,3 @@ endif()
+ 
+ # main src
+ add_subdirectory(src)
+-
+-# packaging
+-add_subdirectory(package)
+-
